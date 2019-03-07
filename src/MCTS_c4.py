@@ -64,17 +64,14 @@ class UCTNode():
     
     def add_dirichlet_noise(self,action_idxs,child_priors):
         valid_child_priors = child_priors[action_idxs] # select only legal moves entries in child_priors array
-        valid_child_priors = 0.75*valid_child_priors + 0.25*np.random.dirichlet(np.zeros([len(valid_child_priors)], dtype=np.float32)+0.3)
+        valid_child_priors = 0.75*valid_child_priors + 0.25*np.random.dirichlet(np.zeros([len(valid_child_priors)], \
+                                                                                          dtype=np.float32)+192)
         child_priors[action_idxs] = valid_child_priors
         return child_priors
     
     def expand(self, child_priors):
         self.is_expanded = True
-        action_idxs = []; c_p = child_priors
-        for action in self.game.actions(): # possible actions
-            if action != []:
-                initial_pos,final_pos,underpromote = action
-                action_idxs.append(ed.encode_action(self.game,initial_pos,final_pos,underpromote))
+        action_idxs = self.game.actions(); c_p = child_priors
         if action_idxs == []:
             self.is_expanded = False
         self.action_idxes = action_idxs
@@ -86,24 +83,7 @@ class UCTNode():
         self.child_priors = c_p
     
     def decode_n_move_pieces(self,board,move):
-        i_pos, f_pos, prom = ed.decode_action(board,move)
-        for i, f, p in zip(i_pos,f_pos,prom):
-            board.player = self.game.player
-            board.move_piece(i,f,p) # move piece to get next board state s
-            a,b = i; c,d = f
-            if board.current_board[c,d] in ["K","k"] and abs(d-b) == 2: # if king moves 2 squares, then move rook too for castling
-                if a == 7 and d-b > 0: # castle kingside for white
-                    board.player = self.game.player
-                    board.move_piece((7,7),(7,5),None)
-                if a == 7 and d-b < 0: # castle queenside for white
-                    board.player = self.game.player
-                    board.move_piece((7,0),(7,3),None)
-                if a == 0 and d-b > 0: # castle kingside for black
-                    board.player = self.game.player
-                    board.move_piece((0,7),(0,5),None)
-                if a == 0 and d-b < 0: # castle queenside for black
-                    board.player = self.game.player
-                    board.move_piece((0,0),(0,3),None)
+        board.drop_piece(move)
         return board
             
     
@@ -141,40 +121,24 @@ def UCT_search(game_state, num_reads,net):
         encoded_s = torch.from_numpy(encoded_s).float().cuda()
         child_priors, value_estimate = net(encoded_s)
         child_priors = child_priors.detach().cpu().numpy().reshape(-1); value_estimate = value_estimate.item()
-        if leaf.game.check_status() == True and leaf.game.in_check_possible_moves() == []: # if checkmate
+        if leaf.game.check_winner() == True or leaf.game.actions() == []: # if somebody won or draw
             leaf.backup(value_estimate); continue
         leaf.expand(child_priors) # need to make sure valid moves
         leaf.backup(value_estimate)
     return np.argmax(root.child_number_visits), root
 
 def do_decode_n_move_pieces(board,move):
-    i_pos, f_pos, prom = ed.decode_action(board,move)
-    for i, f, p in zip(i_pos,f_pos,prom):
-        board.move_piece(i,f,p) # move piece to get next board state s
-        a,b = i; c,d = f
-        if board.current_board[c,d] in ["K","k"] and abs(d-b) == 2: # if king moves 2 squares, then move rook too for castling
-            if a == 7 and d-b > 0: # castle kingside for white
-                board.player = 0
-                board.move_piece((7,7),(7,5),None)
-            if a == 7 and d-b < 0: # castle queenside for white
-                board.player = 0
-                board.move_piece((7,0),(7,3),None)
-            if a == 0 and d-b > 0: # castle kingside for black
-                board.player = 1
-                board.move_piece((0,7),(0,5),None)
-            if a == 0 and d-b < 0: # castle queenside for black
-                board.player = 1
-                board.move_piece((0,0),(0,3),None)
+    board.drop_piece(move)
     return board
 
 def get_policy(root):
-    policy = np.zeros([4672], dtype=np.float32)
+    policy = np.zeros([7], dtype=np.float32)
     for idx in np.where(root.child_number_visits!=0)[0]:
         policy[idx] = root.child_number_visits[idx]/root.child_number_visits.sum()
     return policy
 
 def save_as_pickle(filename, data):
-    completeName = os.path.join("./datasets/iter2/",\
+    completeName = os.path.join("./datasets/iter0/",\
                                 filename)
     with open(completeName, 'wb') as output:
         pickle.dump(data, output)
@@ -194,21 +158,15 @@ def MCTS_self_play(connectnet,num_games,cpu):
         dataset = [] # to get state, policy, value for neural network training
         states = []
         value = 0
-        while checkmate == False and current_board.move_count <= 100:
-            draw_counter = 0
-            for s in states:
-                if np.array_equal(current_board.current_board,s):
-                    draw_counter += 1
-            if draw_counter == 3: # draw by repetition
-                break
+        while checkmate == False and current_board.actions() != []:
             states.append(copy.deepcopy(current_board.current_board))
             board_state = copy.deepcopy(ed.encode_board(current_board))
             best_move, root = UCT_search(current_board,777,connectnet)
             current_board = do_decode_n_move_pieces(current_board,best_move) # decode move and move piece(s)
-            policy = get_policy(root)
+            policy = get_policy(root); print(policy)
             dataset.append([board_state,policy])
-            print(current_board.current_board,current_board.move_count); print(" ")
-            if current_board.check_status() == True and current_board.in_check_possible_moves() == []: # checkmate
+            print(current_board.current_board,current_board.player); print(" ")
+            if current_board.check_winner() == True: # if somebody won
                 if current_board.player == 0: # black wins
                     value = -1
                 elif current_board.player == 1: # white wins
@@ -226,27 +184,45 @@ def MCTS_self_play(connectnet,num_games,cpu):
         save_as_pickle("dataset_cpu%i_%i_%s" % (cpu,idxx, datetime.datetime.today().strftime("%Y-%m-%d")),dataset_p)
    
 if __name__=="__main__":
+    multiprocessing = 0
+    if multiprocessing == 1:
+        net_to_play="c4_current_net.pth.tar"
+        mp.set_start_method("spawn",force=True)
+        net = ConnectNet()
+        cuda = torch.cuda.is_available()
+        if cuda:
+            net.cuda()
+        net.share_memory()
+        net.eval()
+        print("hi")
+        torch.save({'state_dict': net.state_dict()}, os.path.join("./model_data/",\
+                                        "c4_current_net.pth.tar"))
+        
+        current_net_filename = os.path.join("./model_data/",\
+                                        net_to_play)
+        #checkpoint = torch.load(current_net_filename)
+        #net.load_state_dict(checkpoint['state_dict'])
+        processes = []
+        for i in range(6):
+            p = mp.Process(target=MCTS_self_play,args=(net,50,i))
+            p.start()
+            processes.append(p)
+        for p in processes:
+            p.join()
     
-    net_to_play="current_net_trained8_iter1.pth.tar"
-    mp.set_start_method("spawn",force=True)
-    net = ConnectNet()
-    cuda = torch.cuda.is_available()
-    if cuda:
-        net.cuda()
-    net.share_memory()
-    net.eval()
-    print("hi")
-    #torch.save({'state_dict': net.state_dict()}, os.path.join("./model_data/",\
-    #                                "current_net.pth.tar"))
-    
-    current_net_filename = os.path.join("./model_data/",\
-                                    net_to_play)
-    checkpoint = torch.load(current_net_filename)
-    net.load_state_dict(checkpoint['state_dict'])
-    processes = []
-    for i in range(6):
-        p = mp.Process(target=MCTS_self_play,args=(net,50,i))
-        p.start()
-        processes.append(p)
-    for p in processes:
-        p.join()
+    elif multiprocessing == 0:
+        net_to_play="c4_current_net.pth.tar"
+        net = ConnectNet()
+        cuda = torch.cuda.is_available()
+        if cuda:
+            net.cuda()
+        net.eval()
+        print("hi")
+        torch.save({'state_dict': net.state_dict()}, os.path.join("./model_data/",\
+                                        "c4_current_net.pth.tar"))
+        
+        current_net_filename = os.path.join("./model_data/",\
+                                        net_to_play)
+        #checkpoint = torch.load(current_net_filename)
+        #net.load_state_dict(checkpoint['state_dict'])
+        MCTS_self_play(net,50,1)

@@ -28,7 +28,7 @@ class board():
                 self.player = 0
     
     def check_winner(self):
-        if self.player == 0:
+        if self.player == 1:
             for row in range(6):
                 for col in range(7):
                     if self.current_board[row, col] != " ":
@@ -60,7 +60,7 @@ class board():
                                 return True
                         except IndexError:
                             next
-        if self.player == 1:
+        if self.player == 0:
             for row in range(6):
                 for col in range(7):
                     if self.current_board[row, col] != " ":
@@ -92,4 +92,10 @@ class board():
                                 return True
                         except IndexError:
                             next
-                        
+    def actions(self): # returns all possible moves
+        acts = []
+        for col in range(7):
+            if self.current_board[0, col] == " ":
+                acts.append(col)
+        return acts
+            
