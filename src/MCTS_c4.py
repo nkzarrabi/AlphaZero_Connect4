@@ -195,13 +195,13 @@ if __name__=="__main__":
         net.share_memory()
         net.eval()
         print("hi")
-        torch.save({'state_dict': net.state_dict()}, os.path.join("./model_data/",\
-                                        "c4_current_net.pth.tar"))
+        #torch.save({'state_dict': net.state_dict()}, os.path.join("./model_data/",\
+        #                                "c4_current_net.pth.tar"))
         
         current_net_filename = os.path.join("./model_data/",\
                                         net_to_play)
-        #checkpoint = torch.load(current_net_filename)
-        #net.load_state_dict(checkpoint['state_dict'])
+        checkpoint = torch.load(current_net_filename)
+        net.load_state_dict(checkpoint['state_dict'])
         processes = []
         for i in range(6):
             p = mp.Process(target=MCTS_self_play,args=(net,50,i))
@@ -221,8 +221,8 @@ if __name__=="__main__":
         torch.save({'state_dict': net.state_dict()}, os.path.join("./model_data/",\
                                         "c4_current_net.pth.tar"))
         
-        current_net_filename = os.path.join("./model_data/",\
-                                        net_to_play)
+        #current_net_filename = os.path.join("./model_data/",\
+        #                                net_to_play)
         #checkpoint = torch.load(current_net_filename)
         #net.load_state_dict(checkpoint['state_dict'])
-        MCTS_self_play(net,50,1)
+        MCTS_self_play(net,100,1)

@@ -25,8 +25,8 @@ class ConvBlock(nn.Module):
     def __init__(self):
         super(ConvBlock, self).__init__()
         self.action_size = 7
-        self.conv1 = nn.Conv2d(3, 64, 3, stride=1, padding=1)
-        self.bn1 = nn.BatchNorm2d(64)
+        self.conv1 = nn.Conv2d(3, 128, 3, stride=1, padding=1)
+        self.bn1 = nn.BatchNorm2d(128)
 
     def forward(self, s):
         s = s.view(-1, 3, 6, 7)  # batch_size x channels x board_x x board_y
@@ -34,7 +34,7 @@ class ConvBlock(nn.Module):
         return s
 
 class ResBlock(nn.Module):
-    def __init__(self, inplanes=64, planes=64, stride=1, downsample=None):
+    def __init__(self, inplanes=128, planes=128, stride=1, downsample=None):
         super(ResBlock, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=3, stride=stride,
                      padding=1, bias=False)
@@ -56,19 +56,19 @@ class ResBlock(nn.Module):
 class OutBlock(nn.Module):
     def __init__(self):
         super(OutBlock, self).__init__()
-        self.conv = nn.Conv2d(64, 1, kernel_size=1) # value head
-        self.bn = nn.BatchNorm2d(1)
-        self.fc1 = nn.Linear(6*7, 32)
+        self.conv = nn.Conv2d(128, 3, kernel_size=1) # value head
+        self.bn = nn.BatchNorm2d(3)
+        self.fc1 = nn.Linear(3*6*7, 32)
         self.fc2 = nn.Linear(32, 1)
         
-        self.conv1 = nn.Conv2d(64, 32, kernel_size=1) # policy head
+        self.conv1 = nn.Conv2d(128, 32, kernel_size=1) # policy head
         self.bn1 = nn.BatchNorm2d(32)
         self.logsoftmax = nn.LogSoftmax(dim=1)
         self.fc = nn.Linear(6*7*32, 7)
     
     def forward(self,s):
         v = F.relu(self.bn(self.conv(s))) # value head
-        v = v.view(-1, 6*7)  # batch_size X channel X height X width
+        v = v.view(-1, 3*6*7)  # batch_size X channel X height X width
         v = F.relu(self.fc1(v))
         v = F.tanh(self.fc2(v))
         
@@ -101,7 +101,7 @@ class AlphaLoss(torch.nn.Module):
     def forward(self, y_value, value, y_policy, policy):
         value_error = (value - y_value) ** 2
         policy_error = torch.sum((-policy* 
-                                (1e-6 + y_policy.float()).float().log()), 1)
+                                (1e-8 + y_policy.float()).float().log()), 1)
         total_error = (value_error.view(-1).float() + policy_error).mean()
         return total_error
     
@@ -110,11 +110,12 @@ def train(net, dataset, epoch_start=0, epoch_stop=20, cpu=0):
     cuda = torch.cuda.is_available()
     net.train()
     criterion = AlphaLoss()
-    optimizer = optim.Adam(net.parameters(), lr=0.004)
-    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[70,150,300,400], gamma=0.2)
+    optimizer = optim.Adam(net.parameters(), lr=0.01, betas=(0.8, 0.999))
+    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[100,150,300,400], gamma=0.9)
     
     train_set = board_data(dataset)
-    train_loader = DataLoader(train_set, batch_size=5, shuffle=True, num_workers=0, pin_memory=False)
+    batch_size = 20
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=False)
     losses_per_epoch = []
     for epoch in range(epoch_start, epoch_stop):
         scheduler.step()
@@ -132,22 +133,24 @@ def train(net, dataset, epoch_start=0, epoch_stop=20, cpu=0):
             total_loss += loss.item()
             if i % 10 == 9:    # print every 10 mini-batches of size = batch_size
                 print('Process ID: %d [Epoch: %d, %5d/ %d points] total loss per batch: %.3f' %
-                      (os.getpid(), epoch + 1, (i + 1)*5, len(train_set), total_loss/10))
+                      (os.getpid(), epoch + 1, (i + 1)*batch_size, len(train_set), total_loss/10))
                 print("Policy:",policy[0].argmax().item(),policy_pred[0].argmax().item())
                 print("Value:",value[0].item(),value_pred[0,0].item())
                 losses_per_batch.append(total_loss/10)
                 total_loss = 0.0
         losses_per_epoch.append(sum(losses_per_batch)/len(losses_per_batch))
+        '''
         if len(losses_per_epoch) > 50:
-            if abs(sum(losses_per_epoch[-4:-1])/3-sum(losses_per_epoch[-16:-13])/3) <= 0.017:
+            if abs(sum(losses_per_epoch[-4:-1])/3-sum(losses_per_epoch[-16:-13])/3) <= 0.00017:
                 break
+        '''
 
     fig = plt.figure()
     ax = fig.add_subplot(222)
-    ax.scatter([e for e in range(1,epoch_stop+1,1)], losses_per_epoch)
+    ax.scatter([e for e in range(epoch_start, (len(losses_per_epoch)+epoch_start))], losses_per_epoch)
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Loss per batch")
     ax.set_title("Loss vs Epoch")
     print('Finished Training')
-    plt.savefig(os.path.join("./model_data/", "Loss_vs_Epoch_%s.png" % datetime.datetime.today().strftime("%Y-%m-%d")))
+    plt.savefig(os.path.join("./model_data/", "Loss_vs_Epoch0_%s.png" % datetime.datetime.today().strftime("%Y-%m-%d")))
 
