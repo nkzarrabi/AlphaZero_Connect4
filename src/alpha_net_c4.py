@@ -110,8 +110,8 @@ def train(net, dataset, epoch_start=0, epoch_stop=20, cpu=0):
     cuda = torch.cuda.is_available()
     net.train()
     criterion = AlphaLoss()
-    optimizer = optim.Adam(net.parameters(), lr=0.01, betas=(0.8, 0.999))
-    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[100,150,300,400], gamma=0.9)
+    optimizer = optim.Adam(net.parameters(), lr=0.0001, betas=(0.8, 0.999))
+    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[100,150,300,400], gamma=0.7)
     
     train_set = board_data(dataset)
     batch_size = 20
@@ -152,5 +152,5 @@ def train(net, dataset, epoch_start=0, epoch_stop=20, cpu=0):
     ax.set_ylabel("Loss per batch")
     ax.set_title("Loss vs Epoch")
     print('Finished Training')
-    plt.savefig(os.path.join("./model_data/", "Loss_vs_Epoch0_%s.png" % datetime.datetime.today().strftime("%Y-%m-%d")))
+    plt.savefig(os.path.join("./model_data/", "Loss_vs_Epoch3_%s.png" % datetime.datetime.today().strftime("%Y-%m-%d")))
 

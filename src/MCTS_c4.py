@@ -218,11 +218,11 @@ if __name__=="__main__":
             net.cuda()
         net.eval()
         print("hi")
-        torch.save({'state_dict': net.state_dict()}, os.path.join("./model_data/",\
-                                        "c4_current_net.pth.tar"))
+        #torch.save({'state_dict': net.state_dict()}, os.path.join("./model_data/",\
+        #                                "c4_current_net.pth.tar"))
         
-        #current_net_filename = os.path.join("./model_data/",\
-        #                                net_to_play)
-        #checkpoint = torch.load(current_net_filename)
-        #net.load_state_dict(checkpoint['state_dict'])
-        MCTS_self_play(net,100,1)
+        current_net_filename = os.path.join("./model_data/",\
+                                        net_to_play)
+        checkpoint = torch.load(current_net_filename)
+        net.load_state_dict(checkpoint['state_dict'])
+        MCTS_self_play(net,100,0)

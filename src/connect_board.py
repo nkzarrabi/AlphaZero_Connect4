@@ -36,6 +36,7 @@ class board():
                         try:
                             if self.current_board[row, col] == "O" and self.current_board[row + 1, col] == "O" and \
                                 self.current_board[row + 2, col] == "O" and self.current_board[row + 3, col] == "O":
+                                #print("row")
                                 return True
                         except IndexError:
                             next
@@ -43,6 +44,7 @@ class board():
                         try:
                             if self.current_board[row, col] == "O" and self.current_board[row, col + 1] == "O" and \
                                 self.current_board[row, col + 2] == "O" and self.current_board[row, col + 3] == "O":
+                                #print("col")
                                 return True
                         except IndexError:
                             next
@@ -50,13 +52,16 @@ class board():
                         try:
                             if self.current_board[row, col] == "O" and self.current_board[row + 1, col + 1] == "O" and \
                                 self.current_board[row + 2, col + 2] == "O" and self.current_board[row + 3, col + 3] == "O":
+                                #print("\\")
                                 return True
                         except IndexError:
                             next
                         # / diagonal
                         try:
                             if self.current_board[row, col] == "O" and self.current_board[row + 1, col - 1] == "O" and \
-                                self.current_board[row + 2, col - 2] == "O" and self.current_board[row + 3, col - 3] == "O":
+                                self.current_board[row + 2, col - 2] == "O" and self.current_board[row + 3, col - 3] == "O"\
+                                and (col-3) >= 0:
+                                #print("/")
                                 return True
                         except IndexError:
                             next
@@ -88,7 +93,8 @@ class board():
                         # / diagonal
                         try:
                             if self.current_board[row, col] == "X" and self.current_board[row + 1, col - 1] == "X" and \
-                                self.current_board[row + 2, col - 2] == "X" and self.current_board[row + 3, col - 3] == "X":
+                                self.current_board[row + 2, col - 2] == "X" and self.current_board[row + 3, col - 3] == "X"\
+                                and (col-3) >= 0:
                                 return True
                         except IndexError:
                             next
