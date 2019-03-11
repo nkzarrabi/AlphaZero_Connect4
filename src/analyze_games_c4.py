@@ -13,7 +13,7 @@ from visualize_board_c4 import view_board as vb
 import matplotlib.pyplot as plt
 
 data_path = "./datasets/iter0/"
-file = "dataset_cpu2_35_2019-03-11"
+file = "dataset_cpu0_3_2019-03-11"
 filename = os.path.join(data_path,file)
 with open(filename, 'rb') as fo:
     dataset = pickle.load(fo, encoding='bytes')

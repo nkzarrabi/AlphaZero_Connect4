@@ -9,6 +9,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import os
 import datetime
+import numpy as np
 
 class board_data(Dataset):
     def __init__(self, dataset): # dataset = np.array of (s, p, v)
@@ -19,7 +20,7 @@ class board_data(Dataset):
         return len(self.X)
     
     def __getitem__(self,idx):
-        return self.X[idx].transpose(2,0,1), self.y_p[idx], self.y_v[idx]
+        return np.int64(self.X[idx].transpose(2,0,1)), self.y_p[idx], self.y_v[idx]
 
 class ConvBlock(nn.Module):
     def __init__(self):
@@ -110,11 +111,11 @@ def train(net, dataset, epoch_start=0, epoch_stop=20, cpu=0):
     cuda = torch.cuda.is_available()
     net.train()
     criterion = AlphaLoss()
-    optimizer = optim.Adam(net.parameters(), lr=0.0001, betas=(0.8, 0.999))
+    optimizer = optim.Adam(net.parameters(), lr=0.001, betas=(0.8, 0.999))
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[100,150,300,400], gamma=0.7)
     
     train_set = board_data(dataset)
-    batch_size = 20
+    batch_size = 30
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=False)
     losses_per_epoch = []
     for epoch in range(epoch_start, epoch_stop):
@@ -152,5 +153,5 @@ def train(net, dataset, epoch_start=0, epoch_stop=20, cpu=0):
     ax.set_ylabel("Loss per batch")
     ax.set_title("Loss vs Epoch")
     print('Finished Training')
-    plt.savefig(os.path.join("./model_data/", "Loss_vs_Epoch3_%s.png" % datetime.datetime.today().strftime("%Y-%m-%d")))
+    plt.savefig(os.path.join("./model_data/", "Loss_vs_Epoch0_%s.png" % datetime.datetime.today().strftime("%Y-%m-%d")))
 
