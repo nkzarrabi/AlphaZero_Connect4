@@ -103,7 +103,7 @@ class AlphaLoss(torch.nn.Module):
         value_error = (value - y_value) ** 2
         policy_error = torch.sum((-policy* 
                                 (1e-8 + y_policy.float()).float().log()), 1)
-        total_error = (value_error.view(-1).float() + policy_error).mean()
+        total_error = (value_error.view(-1).float() + policy_error).mean(); #print(value_error.view(-1).float().mean().item(),policy_error.mean().item())
         return total_error
     
 def train(net, dataset, epoch_start=0, epoch_stop=20, cpu=0):
@@ -136,7 +136,10 @@ def train(net, dataset, epoch_start=0, epoch_stop=20, cpu=0):
                 print('Process ID: %d [Epoch: %d, %5d/ %d points] total loss per batch: %.3f' %
                       (os.getpid(), epoch + 1, (i + 1)*batch_size, len(train_set), total_loss/10))
                 print("Policy:",policy[0].argmax().item(),policy_pred[0].argmax().item())
+                print("Policy data:", policy[0]); print("Policy pred:", policy_pred[0])
                 print("Value:",value[0].item(),value_pred[0,0].item())
+                print("Conv grad:", net.conv.conv1.weight.grad.mean().item())
+                print("Res18 grad:", net.res_18.conv1.weight.grad.mean().item())
                 losses_per_batch.append(total_loss/10)
                 total_loss = 0.0
         losses_per_epoch.append(sum(losses_per_batch)/len(losses_per_batch))
@@ -153,5 +156,5 @@ def train(net, dataset, epoch_start=0, epoch_stop=20, cpu=0):
     ax.set_ylabel("Loss per batch")
     ax.set_title("Loss vs Epoch")
     print('Finished Training')
-    plt.savefig(os.path.join("./model_data/", "Loss_vs_Epoch0_%s.png" % datetime.datetime.today().strftime("%Y-%m-%d")))
+    plt.savefig(os.path.join("./model_data/", "Loss_vs_Epoch1_%s.png" % datetime.datetime.today().strftime("%Y-%m-%d")))
 
