@@ -6,7 +6,7 @@ import pickle
 import numpy as np
 import torch
 
-def train_chessnet(net_to_train="c4_current_net.pth.tar",save_as="c4_current_net_trained1_iter0.pth.tar"):
+def train_chessnet(net_to_train="c4_current_net_trained1_iter0.pth.tar",save_as="c4_current_net_trained2_iter0.pth.tar"):
     # gather data
     datasets = []
     data_path = "./datasets/iter0/"
@@ -35,7 +35,7 @@ def train_chessnet(net_to_train="c4_current_net.pth.tar",save_as="c4_current_net
                                     net_to_train)
     checkpoint = torch.load(current_net_filename)
     net.load_state_dict(checkpoint['state_dict'])
-    train(net, datasets, epoch_start=0, epoch_stop=100, cpu=0)
+    train(net, datasets, epoch_start=0, epoch_stop=300, cpu=0)
     # save results
     torch.save({'state_dict': net.state_dict()}, os.path.join("./model_data/",\
                                     save_as))

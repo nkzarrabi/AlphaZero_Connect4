@@ -113,7 +113,7 @@ class DummyNode(object):
         self.child_number_visits = collections.defaultdict(float)
 
 
-def UCT_search(game_state, num_reads,net):
+def UCT_search(game_state, num_reads,net,temp):
     root = UCTNode(game_state, move=None, parent=DummyNode())
     for i in range(num_reads):
         leaf = root.select_leaf()
@@ -125,20 +125,20 @@ def UCT_search(game_state, num_reads,net):
             leaf.backup(value_estimate); continue
         leaf.expand(child_priors) # need to make sure valid moves
         leaf.backup(value_estimate)
-    return np.argmax(root.child_number_visits), root
+    return root
 
 def do_decode_n_move_pieces(board,move):
     board.drop_piece(move)
     return board
 
-def get_policy(root):
-    policy = np.zeros([7], dtype=np.float32)
-    for idx in np.where(root.child_number_visits!=0)[0]:
-        policy[idx] = root.child_number_visits[idx]/root.child_number_visits.sum()
-    return policy
+def get_policy(root, temp=1):
+    #policy = np.zeros([7], dtype=np.float32)
+    #for idx in np.where(root.child_number_visits!=0)[0]:
+    #    policy[idx] = ((root.child_number_visits[idx])**(1/temp))/sum(root.child_number_visits**(1/temp))
+    return ((root.child_number_visits)**(1/temp))/sum(root.child_number_visits**(1/temp))
 
 def save_as_pickle(filename, data):
-    completeName = os.path.join("./datasets/iter0/",\
+    completeName = os.path.join("./datasets/iter1/",\
                                 filename)
     with open(completeName, 'wb') as output:
         pickle.dump(data, output)
@@ -158,12 +158,19 @@ def MCTS_self_play(connectnet,num_games,cpu):
         dataset = [] # to get state, policy, value for neural network training
         states = []
         value = 0
+        move_count = 0
         while checkmate == False and current_board.actions() != []:
+            if move_count < 11:
+                t = 1
+            else:
+                t = 0.1
             states.append(copy.deepcopy(current_board.current_board))
             board_state = copy.deepcopy(ed.encode_board(current_board))
-            best_move, root = UCT_search(current_board,777,connectnet)
-            current_board = do_decode_n_move_pieces(current_board,best_move) # decode move and move piece(s)
-            policy = get_policy(root); print(policy)
+            root = UCT_search(current_board,777,connectnet,t)
+            policy = get_policy(root, t); print(policy)
+            current_board = do_decode_n_move_pieces(current_board,\
+                                                    np.random.choice(np.array([0,1,2,3,4,5,6]), \
+                                                                     p = policy)) # decode move and move piece(s)
             dataset.append([board_state,policy])
             print(current_board.current_board,current_board.player); print(" ")
             if current_board.check_winner() == True: # if somebody won
@@ -172,7 +179,7 @@ def MCTS_self_play(connectnet,num_games,cpu):
                 elif current_board.player == 1: # white wins
                     value = 1
                 checkmate = True
-                
+            move_count += 1
         dataset_p = []
         for idx,data in enumerate(dataset):
             s,p = data
@@ -186,7 +193,7 @@ def MCTS_self_play(connectnet,num_games,cpu):
 if __name__=="__main__":
     multiprocessing = 0
     if multiprocessing == 1:
-        net_to_play="c4_current_net.pth.tar"
+        net_to_play="cc4_current_net_trained2_iter0.pth.tar"
         mp.set_start_method("spawn",force=True)
         net = ConnectNet()
         cuda = torch.cuda.is_available()
@@ -211,7 +218,7 @@ if __name__=="__main__":
             p.join()
     
     elif multiprocessing == 0:
-        net_to_play="c4_current_net.pth.tar"
+        net_to_play="c4_current_net_trained2_iter0.pth.tar"
         net = ConnectNet()
         cuda = torch.cuda.is_available()
         if cuda:
@@ -225,4 +232,4 @@ if __name__=="__main__":
                                         net_to_play)
         checkpoint = torch.load(current_net_filename)
         net.load_state_dict(checkpoint['state_dict'])
-        MCTS_self_play(net,100,0)
+        MCTS_self_play(net,100,2)
