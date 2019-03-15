@@ -156,5 +156,5 @@ def train(net, dataset, epoch_start=0, epoch_stop=20, cpu=0):
     ax.set_ylabel("Loss per batch")
     ax.set_title("Loss vs Epoch")
     print('Finished Training')
-    plt.savefig(os.path.join("./model_data/", "Loss_vs_Epoch1_%s.png" % datetime.datetime.today().strftime("%Y-%m-%d")))
+    plt.savefig("Loss_vs_Epoch_iter1_1%s.png" % datetime.datetime.today().strftime("%Y-%m-%d"))
 

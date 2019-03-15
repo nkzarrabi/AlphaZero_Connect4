@@ -6,10 +6,10 @@ import pickle
 import numpy as np
 import torch
 
-def train_chessnet(net_to_train="c4_current_net_trained1_iter0.pth.tar",save_as="c4_current_net_trained2_iter0.pth.tar"):
+def train_chessnet(net_to_train="c4_current_net_trained2_iter0.pth.tar",save_as="c4_current_net_trained_iter1.pth.tar"):
     # gather data
     datasets = []
-    data_path = "./datasets/iter0/"
+    data_path = "./datasets/iter1/"
     for idx,file in enumerate(os.listdir(data_path)):
         filename = os.path.join(data_path,file)
         with open(filename, 'rb') as fo:

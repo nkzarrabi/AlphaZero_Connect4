@@ -232,4 +232,4 @@ if __name__=="__main__":
                                         net_to_play)
         checkpoint = torch.load(current_net_filename)
         net.load_state_dict(checkpoint['state_dict'])
-        MCTS_self_play(net,100,2)
+        MCTS_self_play(net,100,4)
