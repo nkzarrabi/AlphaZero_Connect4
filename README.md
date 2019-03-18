@@ -60,5 +60,4 @@ A full iteration pipeline consists of:
 
 Neural net initialized with random weights (alpha_net_0) used to generate 151 games of MCTS self-play. Then, these games are used to train alpha_net_0.
 
-![alt text](https://github.com/plkmo/AlphaZero_Connect4/blob/master/Loss_vs_Epoch0_iter0_2019-03-12.png)
-Loss vs Epoch when training alpha_net_0
+![alt text](https://github.com/plkmo/AlphaZero_Connect4/blob/master/Loss_vs_Epoch0_iter0_2019-03-12.png) Loss vs Epoch when training alpha_net_0
