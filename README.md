@@ -60,14 +60,18 @@ A full iteration pipeline consists of:
 Iteration 0:
 alpha_net_0 (Initialized with random weights)
 151 games of MCTS self-play generated
+
 Iteration 1:
 alpha_net_1 (trained from iteration 0)
 148 games of MCTS self-play generated
+
 Iteration 2:
 alpha_net_2 (trained from iteration 1)
 310 games of MCTS self-play generated
+
 Evaluation 1:
 After Iteration 2, alpha_net_2 is pitted against alpha_net_0 to check if the neural net is improving in terms of policy and value estimate. Indeed, out of 100 games played, alpha_net_2 won 83. 
+
 Iteration 3:
 alpha_net_3 (trained from iteration 2)
 584 games of MCTS self-play generated
