@@ -111,7 +111,7 @@ def train(net, dataset, epoch_start=0, epoch_stop=20, cpu=0):
     cuda = torch.cuda.is_available()
     net.train()
     criterion = AlphaLoss()
-    optimizer = optim.Adam(net.parameters(), lr=0.001, betas=(0.8, 0.999))
+    optimizer = optim.Adam(net.parameters(), lr=0.0007, betas=(0.8, 0.999))
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[100,150,300,400], gamma=0.7)
     
     train_set = board_data(dataset)
