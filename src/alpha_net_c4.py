@@ -71,7 +71,7 @@ class OutBlock(nn.Module):
         v = F.relu(self.bn(self.conv(s))) # value head
         v = v.view(-1, 3*6*7)  # batch_size X channel X height X width
         v = F.relu(self.fc1(v))
-        v = F.tanh(self.fc2(v))
+        v = torch.tanh(self.fc2(v))
         
         p = F.relu(self.bn1(self.conv1(s))) # policy head
         p = p.view(-1, 6*7*32)
