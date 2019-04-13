@@ -103,7 +103,7 @@ class AlphaLoss(torch.nn.Module):
         value_error = (value - y_value) ** 2
         policy_error = torch.sum((-policy* 
                                 (1e-8 + y_policy.float()).float().log()), 1)
-        total_error = (value_error.view(-1).float() + policy_error).mean(); #print(value_error.view(-1).float().mean().item(),policy_error.mean().item())
+        total_error = (value_error.view(-1).float() + policy_error).mean()
         return total_error
     
 def train(net, dataset, epoch_start=0, epoch_stop=20, cpu=0):

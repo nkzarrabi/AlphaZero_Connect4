@@ -100,7 +100,7 @@ class UCTNode():
         while current.parent is not None:
             current.number_visits += 1
             if current.game.player == 1: # same as current.parent.game.player = 0
-                current.total_value += (1*value_estimate) # value estimate +1 = white win
+                current.total_value += (1*value_estimate) # value estimate +1 = O wins
             elif current.game.player == 0: # same as current.parent.game.player = 1
                 current.total_value += (-1*value_estimate)
             current = current.parent

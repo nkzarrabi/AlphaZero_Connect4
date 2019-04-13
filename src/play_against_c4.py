@@ -84,7 +84,7 @@ def play_game(net):
         return None, dataset
 
 if __name__ == "__main__":
-    best_net="c4_current_net_trained1_iter3.pth.tar"
+    best_net="c4_current_net_trained1_iter6.pth.tar"
     best_net_filename = os.path.join("./model_data/",\
                                     best_net)
     best_cnet = ConnectNet()

@@ -9,3 +9,5 @@
 /src/model_data/*
 /src/evaluator_data/*
 /gamesimages/*
+/src/fb_game_module.py
+/src/play_on_fb.py

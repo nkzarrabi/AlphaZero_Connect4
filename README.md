@@ -76,4 +76,18 @@ Iteration 3:
 alpha_net_3 (trained from iteration 2)
 584 games of MCTS self-play generated
 
+Iteration 4:
+alpha_net_4 (trained from iteration 3)
+753 games of MCTS self-play generated
+
+Iteration 5:
+alpha_net_5 (trained from iteration 4)
+1286 games of MCTS self-play generated
+
+Iteration 6:
+alpha_net_6 (trained from iteration 5)
+1670 games of MCTS self-play generated
+
+
+
 ![alt text](https://github.com/plkmo/AlphaZero_Connect4/blob/master/Loss_vs_Epoch0_iter0_2019-03-12.png) Typical Loss vs Epoch when training neural net (alpha_net_0)
