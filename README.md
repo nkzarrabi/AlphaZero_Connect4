@@ -34,6 +34,8 @@ In this repository, you will find the following core scripts:
 
 8) analyze_games_c4.py – miscellaneous script to visualize and save the Connect4 games
 
+9) play_against_c4.py - run it to play a Connect4 game against AlphaZero! (change "best_net" to the alpha net you've trained)
+
 # Iteration pipeline
 
 A full iteration pipeline consists of:
