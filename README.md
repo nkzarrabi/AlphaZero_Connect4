@@ -11,13 +11,14 @@ Inspired by the power of such supervised reinforcement learning models, I initia
 
 However, I quickly realized that the cost/computational power of training the chess AI would be too much to bear, thus I decided to try to implement AlphaZero on Connect4, which has much reduced moves complexity and hence would be more gentle on computational power.
 The point here, is to demonstrate that the AlphaZero algorithm works well to create a powerful Connect4 AI.
+See published article for implementation details: https://towardsdatascience.com/from-scratch-implementation-of-alphazero-for-connect4-f73d4554002a
 
 # Contents
 In this repository, you will find the following core scripts:
 
 1) MCTS_c4.py - implements the Monte-Carlo Tree Search (MCTS) algorithm based on Polynomial Upper Confidence Trees (PUCT) method for leaf transversal. This generates datasets (state, policy, value) for neural network training
 
-2) alpha_net_c4.py - PyTorch implementation of the AlphaGoZero neural network architecture, with slightly reduced number of residual blocks (19) and convolution channels (256) for faster computation. The network consists of, in order:
+2) alpha_net_c4.py - PyTorch implementation of the AlphaGoZero neural network architecture, with slightly reduced number of residual blocks (19) and convolution channels (128) for faster computation. The network consists of, in order:
 - A convolution block with batch normalization
 - 19 residual blocks with each block consisting of two convolutional layers with batch normalization
 - An output block with two heads: a policy output head that consists of convolutional layer with batch normalization followed by logsoftmax, and a value head that consists of a convolutional layer with relu and tanh activation.
