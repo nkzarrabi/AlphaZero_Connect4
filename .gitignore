@@ -1,4 +1,3 @@
-*.tar
 *.jpg
 *.jpeg
 *.gif
@@ -6,7 +5,6 @@
 *.tiff
 *.pth
 /src/datasets/*
-/src/model_data/*
 /src/evaluator_data/*
 /gamesimages/*
 /src/fb_game_module.py
