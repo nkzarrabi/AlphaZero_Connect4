@@ -1,16 +1,8 @@
 # AlphaZero Connect4
 # From-scratch implementation of AlphaZero for Connect4
+(Updated 4/7/2019)
 
 This repo demonstrates an implementation of AlphaZero framework for Connect4, using python and PyTorch.
-
-We all know that AlphaGo, created by DeepMind, created a big stir when it defeated reigning world champion Lee Sedol 4-1 in the game of Go in 2016, hence becoming the first computer program to achieve superhuman performance in an ultra-complicated game. 
-
-However, AlphaGoZero, published (https://www.nature.com/articles/nature24270) a year later in 2017, push boundaries one big step further by achieving a similar feat without any human data inputs. A subsequent paper (https://arxiv.org/abs/1712.01815) released by the same group DeepMind successfully applied the same reinforcement learning + supervised learning framework to chess, outperforming the previous best chess program Stockfish after just 4 hours of training.
-
-Inspired by the power of such supervised reinforcement learning models, I initially created a repository to build my own chess AI program from scratch, closely following the methods as described in the papers above. 
-
-However, I quickly realized that the cost/computational power of training the chess AI would be too much to bear, thus I decided to try to implement AlphaZero on Connect4, which has much reduced moves complexity and hence would be more gentle on computational power.
-The point here, is to demonstrate that the AlphaZero algorithm works well to create a powerful Connect4 AI.
 
 For more implementation details, please see my published article: https://towardsdatascience.com/from-scratch-implementation-of-alphazero-for-connect4-f73d4554002a
 
@@ -34,9 +26,7 @@ In this repository, you will find the following core scripts:
 
 7) visualize_board_c4.py – miscellaneous function to visualize the board in a more attractive way
 
-8) analyze_games_c4.py – miscellaneous script to visualize and save the Connect4 games
-
-9) play_against_c4.py - run it to play a Connect4 game against AlphaZero! (change "best_net" to the alpha net you've trained)
+8) play_against_c4.py - run it to play a Connect4 game against AlphaZero! (change "best_net" to the alpha net you've trained)
 
 # Iteration pipeline
 
@@ -51,13 +41,7 @@ A full iteration pipeline consists of:
 
 # How to play
 
-1) Run the MCTS_c4.py to generate self-play datasets. Note that for the first time, you will need to create and save a random, initialized alpha_net for loading.
-
-2) Run train_c4.py to train the alpha_net with the datasets.
-
-3) At predetermined checkpoints, run evaluator_c4.py to evaluate the trained net against the neural net from previous iteration. Saves the neural net that performs better.
-
-4) Repeat for next iteration.
+1) Clone the repo, then run main_pipeline.py with appropriate arguments to start training your model. (*Multi-processing code functionality not yet tested)
 
 # Results
 

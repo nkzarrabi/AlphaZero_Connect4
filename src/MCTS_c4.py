@@ -11,6 +11,25 @@ import torch
 import torch.multiprocessing as mp
 from alpha_net_c4 import ConnectNet
 import datetime
+import logging
+from tqdm import tqdm
+
+logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s', \
+                    datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
+logger = logging.getLogger(__file__)
+
+def save_as_pickle(filename, data):
+    completeName = os.path.join("./datasets/",\
+                                filename)
+    with open(completeName, 'wb') as output:
+        pickle.dump(data, output)
+
+def load_pickle(filename):
+    completeName = os.path.join("./datasets/",\
+                                filename)
+    with open(completeName, 'rb') as pkl_file:
+        data = pickle.load(pkl_file)
+    return data
 
 class UCTNode():
     def __init__(self, game, move, parent=None):
@@ -75,9 +94,7 @@ class UCTNode():
         if action_idxs == []:
             self.is_expanded = False
         self.action_idxes = action_idxs
-        for i in range(len(child_priors)): # mask all illegal actions
-            if i not in action_idxs:
-                c_p[i] = 0.0000000000
+        c_p[[i for i in range(len(child_priors)) if i not in action_idxs]] = 0.000000000 # mask all illegal actions
         if self.parent.parent == None: # add dirichlet noise to child_priors in root node
             c_p = self.add_dirichlet_noise(action_idxs,c_p)
         self.child_priors = c_p
@@ -86,7 +103,6 @@ class UCTNode():
         board.drop_piece(move)
         return board
             
-    
     def maybe_add_child(self, move):
         if move not in self.children:
             copy_board = copy.deepcopy(self.game) # make copy of board
@@ -105,13 +121,11 @@ class UCTNode():
                 current.total_value += (-1*value_estimate)
             current = current.parent
         
-
 class DummyNode(object):
     def __init__(self):
         self.parent = None
         self.child_total_value = collections.defaultdict(float)
         self.child_number_visits = collections.defaultdict(float)
-
 
 def UCT_search(game_state, num_reads,net,temp):
     root = UCTNode(game_state, move=None, parent=DummyNode())
@@ -137,22 +151,14 @@ def get_policy(root, temp=1):
     #    policy[idx] = ((root.child_number_visits[idx])**(1/temp))/sum(root.child_number_visits**(1/temp))
     return ((root.child_number_visits)**(1/temp))/sum(root.child_number_visits**(1/temp))
 
-def save_as_pickle(filename, data):
-    completeName = os.path.join("./datasets/iter1/",\
-                                filename)
-    with open(completeName, 'wb') as output:
-        pickle.dump(data, output)
-
-def load_pickle(filename):
-    completeName = os.path.join("./datasets/",\
-                                filename)
-    with open(completeName, 'rb') as pkl_file:
-        data = pickle.load(pkl_file)
-    return data
-
-
-def MCTS_self_play(connectnet,num_games,cpu):
-    for idxx in range(0,num_games):
+def MCTS_self_play(connectnet, num_games, start_idx, cpu, args, iteration):
+    logger.info("[CPU: %d]: Starting MCTS self-play..." % cpu)
+    
+    if not os.path.isdir("./datasets/iter_%d" % iteration):
+        os.mkdir("./datasets/iter_%d" % iteration)
+        
+    for idxx in tqdm(range(start_idx,num_games)):
+        logger.info("[CPU: %d]: Game %d" % (cpu, idxx))
         current_board = c_board()
         checkmate = False
         dataset = [] # to get state, policy, value for neural network training
@@ -161,18 +167,18 @@ def MCTS_self_play(connectnet,num_games,cpu):
         move_count = 0
         while checkmate == False and current_board.actions() != []:
             if move_count < 11:
-                t = 1
+                t = args.temperature_MCTS
             else:
                 t = 0.1
             states.append(copy.deepcopy(current_board.current_board))
             board_state = copy.deepcopy(ed.encode_board(current_board))
             root = UCT_search(current_board,777,connectnet,t)
-            policy = get_policy(root, t); print(policy)
+            policy = get_policy(root, t); print("[CPU: %d]: Game %d POLICY:\n " % (cpu, idxx), policy)
             current_board = do_decode_n_move_pieces(current_board,\
                                                     np.random.choice(np.array([0,1,2,3,4,5,6]), \
                                                                      p = policy)) # decode move and move piece(s)
             dataset.append([board_state,policy])
-            print(current_board.current_board,current_board.player); print(" ")
+            print("[CPU: %d]: Game %d CURRENT BOARD:\n" % (cpu, idxx), current_board.current_board,current_board.player); print(" ")
             if current_board.check_winner() == True: # if somebody won
                 if current_board.player == 0: # black wins
                     value = -1
@@ -188,48 +194,65 @@ def MCTS_self_play(connectnet,num_games,cpu):
             else:
                 dataset_p.append([s,p,value])
         del dataset
-        save_as_pickle("dataset_cpu%i_%i_%s" % (cpu,idxx, datetime.datetime.today().strftime("%Y-%m-%d")),dataset_p)
+        save_as_pickle("iter_%d/" % iteration +\
+                       "dataset_iter%d_cpu%i_%i_%s" % (iteration, cpu, idxx, datetime.datetime.today().strftime("%Y-%m-%d")), dataset_p)
    
-if __name__=="__main__":
-    multiprocessing = 0
-    if multiprocessing == 1:
-        net_to_play="cc4_current_net_trained2_iter0.pth.tar"
+def run_MCTS(args, start_idx=0, iteration=0):
+    net_to_play="%s_iter%d.pth.tar" % (args.neural_net_name, iteration)
+    net = ConnectNet()
+    cuda = torch.cuda.is_available()
+    if cuda:
+        net.cuda()
+    
+    if args.MCTS_num_processes > 1:
+        logger.info("Preparing model for multi-process MCTS...")
         mp.set_start_method("spawn",force=True)
-        net = ConnectNet()
-        cuda = torch.cuda.is_available()
-        if cuda:
-            net.cuda()
         net.share_memory()
         net.eval()
-        print("hi")
-        #torch.save({'state_dict': net.state_dict()}, os.path.join("./model_data/",\
-        #                                "c4_current_net.pth.tar"))
-        
-        current_net_filename = os.path.join("./model_data/",\
-                                        net_to_play)
-        checkpoint = torch.load(current_net_filename)
-        net.load_state_dict(checkpoint['state_dict'])
-        processes = []
-        for i in range(6):
-            p = mp.Process(target=MCTS_self_play,args=(net,50,i))
-            p.start()
-            processes.append(p)
-        for p in processes:
-            p.join()
     
-    elif multiprocessing == 0:
-        net_to_play="c4_current_net_trained2_iter0.pth.tar"
-        net = ConnectNet()
-        cuda = torch.cuda.is_available()
-        if cuda:
-            net.cuda()
+        current_net_filename = os.path.join("./model_data/",\
+                                        net_to_play)
+        if os.path.isfile(current_net_filename):
+            checkpoint = torch.load(current_net_filename)
+            net.load_state_dict(checkpoint['state_dict'])
+            logger.info("Loaded %s model." % current_net_filename)
+        else:
+            torch.save({'state_dict': net.state_dict()}, os.path.join("./model_data/",\
+                        net_to_play))
+            logger.info("Initialized model.")
+        
+        processes = []
+        if args.MCTS_num_processes > mp.cpu_count():
+            num_processes = mp.cpu_count()
+            logger.info("Required number of processes exceed number of CPUs! Setting MCTS_num_processes to %d" % num_processes)
+        else:
+            num_processes = args.MCTS_num_processes
+        
+        logger.info("Spawning %d processes..." % num_processes)
+        with torch.no_grad():
+            for i in range(num_processes):
+                p = mp.Process(target=MCTS_self_play, args=(net, args.num_games_per_MCTS_process, start_idx, i, args, iteration))
+                p.start()
+                processes.append(p)
+            for p in processes:
+                p.join()
+        logger.info("Finished multi-process MCTS!")
+    
+    elif args.MCTS_num_processes == 1:
+        logger.info("Preparing model for MCTS...")
         net.eval()
-        print("hi")
-        #torch.save({'state_dict': net.state_dict()}, os.path.join("./model_data/",\
-        #                                "c4_current_net.pth.tar"))
         
         current_net_filename = os.path.join("./model_data/",\
                                         net_to_play)
-        checkpoint = torch.load(current_net_filename)
-        net.load_state_dict(checkpoint['state_dict'])
-        MCTS_self_play(net,100,4)
+        if os.path.isfile(current_net_filename):
+            checkpoint = torch.load(current_net_filename)
+            net.load_state_dict(checkpoint['state_dict'])
+            logger.info("Loaded %s model." % current_net_filename)
+        else:
+            torch.save({'state_dict': net.state_dict()}, os.path.join("./model_data/",\
+                        net_to_play))
+            logger.info("Initialized model.")
+        
+        with torch.no_grad():
+            MCTS_self_play(net, args.num_games_per_MCTS_process, start_idx, 0, args, iteration)
+        logger.info("Finished MCTS!")
