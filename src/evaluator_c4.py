@@ -12,6 +12,7 @@ import pickle
 import torch.multiprocessing as mp
 import datetime
 import logging
+import fickling
 
 logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s', \
                     datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
@@ -27,7 +28,7 @@ def load_pickle(filename):
     completeName = os.path.join("./evaluator_data/",\
                                 filename)
     with open(completeName, 'rb') as pkl_file:
-        data = pickle.load(pkl_file)
+        data = fickling.load(pkl_file)
     return data
 
 class arena():
