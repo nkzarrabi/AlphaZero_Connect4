@@ -13,6 +13,7 @@ from alpha_net_c4 import ConnectNet
 import datetime
 import logging
 from tqdm import tqdm
+import fickling
 
 logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s', \
                     datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
@@ -28,7 +29,7 @@ def load_pickle(filename):
     completeName = os.path.join("./datasets/",\
                                 filename)
     with open(completeName, 'rb') as pkl_file:
-        data = pickle.load(pkl_file)
+        data = fickling.load(pkl_file)
     return data
 
 class UCTNode():

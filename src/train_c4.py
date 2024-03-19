@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 from torch.nn.utils import clip_grad_norm_
 import matplotlib.pyplot as plt
 import logging
+import fickling
 
 logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s', \
                     datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
@@ -26,7 +27,7 @@ def load_pickle(filename):
     completeName = os.path.join("./model_data/",\
                                 filename)
     with open(completeName, 'rb') as pkl_file:
-        data = pickle.load(pkl_file)
+        data = fickling.load(pkl_file)
     return data
 
 def load_state(net, optimizer, scheduler, args, iteration, new_optim_state=True):
@@ -131,7 +132,7 @@ def train_chessnet(args, iteration, new_optim_state):
     for idx,file in enumerate(os.listdir(data_path)):
         filename = os.path.join(data_path,file)
         with open(filename, 'rb') as fo:
-            datasets.extend(pickle.load(fo, encoding='bytes'))
+            datasets.extend(fickling.load(fo, encoding='bytes'))
     datasets = np.array(datasets)
     logger.info("Loaded data from %s." % data_path)
     
